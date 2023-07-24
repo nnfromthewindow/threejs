@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>My first three.js app</title>
+		<style>
+			html, body {
+  height: 100%;
+  margin: 0;
+  font-size: 16pt;
+}
+#controls {
+  background: #AAA;
+  padding: 5px;
+}
+#c {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+		</style>
+	</head>
+	<body>
+		<canvas id="c"></canvas>
+        <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
+
+		<script type="importmap">
+		{
+			"imports": {
+			"three": "https://unpkg.com/three@latest/build/three.module.js",
+			"three/addons/": "https://unpkg.com/three@latest/examples/jsm/"
+			}
+		}
+		</script>
+		<script src="https://threejs.org/manual/3rdparty/split.min.js"></script>
+		<script type="module" src="/main.js"></script>
+	</body>
+</html>
