@@ -17,7 +17,20 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
     const far = 500;
     const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
 
-// LIGHTS
+    camera.position.set(0, 5, 0);
+    camera.up.set(0, 0, 1);
+    camera.lookAt(0, 0, 0);
+//AXES HELPER
+  const axes = new THREE.AxesHelper();
+  axes.material.depthTest = false;
+  axes.renderOrder = 1;
+
+  const loadManager = new THREE.LoadingManager();
+  const textureLoader = new THREE.TextureLoader(loadManager);
+
+  const loader = new FontLoader();
+
+  // LIGHTS
 
     const dirLight = new THREE.DirectionalLight( 0xffffff, 0.4 );
     dirLight.position.set( 0, 0, 1 ).normalize();
@@ -34,16 +47,44 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
     const geometry = new THREE.BoxGeometry(boxWidth, boxHeight, boxDepth);
     //const material = new THREE.MeshBasicMaterial( { color: 0xff0000 } );
     
-    const material = new THREE.MeshPhongMaterial({color: 0x44aa88})
-    const material2 = new THREE.MeshBasicMaterial({color: 0xffffff})
-    const cube = new THREE.Mesh( geometry, material );
-    const materialText = new THREE.MeshPhongMaterial( { color: 0xffffff } )
+    //const material = new THREE.MeshBasicMaterial({map: textureLoader.load('static/wall.jpg')})
 
-    const loader = new FontLoader();
+    const materials = [
+        new THREE.MeshBasicMaterial({map: textureLoader.load('static/flower-1.jpg')}),
+        new THREE.MeshBasicMaterial({map: textureLoader.load('static/flower-2.jpg')}),
+        new THREE.MeshBasicMaterial({map: textureLoader.load('static/flower-3.jpg')}),
+        new THREE.MeshBasicMaterial({map: textureLoader.load('static/flower-4.jpg')}),
+        new THREE.MeshBasicMaterial({map: textureLoader.load('static/flower-5.jpg')}),
+        new THREE.MeshBasicMaterial({map: textureLoader.load('static/flower-6.jpg')}),
+      ];
+
+    const material2 = new THREE.MeshBasicMaterial({color: 0xffffff})
+    //const cube = new THREE.Mesh( geometry, material );
+    const cube = new THREE.Mesh(geometry, materials);
+    const materialText = new THREE.MeshPhongMaterial( { color: 0xffffff } )
+    
+    loadManager.onLoad = () => {
+        loadingElem.style.display = 'none';
+    //    const cube = new THREE.Mesh(geometry, materials);
+        scene.add(cube);
+       // cubes.push(cube);  // add to our list of cubes to rotate
+      };
+
+    loadManager.onProgress = (urlOfLastItemLoaded, itemsLoaded, itemsTotal) => {
+    const progress = itemsLoaded / itemsTotal;
+    progressBarElem.style.transform = `scaleX(${progress})`;
+    };  
+      const loadingElem = document.querySelector('#loading');
+      const progressBarElem = loadingElem.querySelector('.progressbar');
 
     let text
     let car
 
+    cube.add(axes)
+    //const helper = new AxisGridHelper(cube, 2);
+    //cube.add(helper, 'visible').name("Tierra");
+
+    
 
     loader.load( 'fonts/Pacifico_Regular.json', function ( font ) {
 
@@ -97,7 +138,7 @@ const cubeWire = new THREE.LineSegments(geometry2, material3);
     scene.add( cube );
     scene.add( cubeWire );
     
-    camera.position.z = 8;
+   // camera.position.z = 8;
 
 
 
