@@ -3,6 +3,23 @@ import * as THREE from 'three';
 import { FontLoader } from 'three/addons/loaders/FontLoader.js';
 import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+import GUI from 'https://cdn.jsdelivr.net/npm/lil-gui@0.18/+esm';
+//CLASE DE GUI HELPER
+class ColorGUIHelper {
+    constructor(object, prop) {
+      this.object = object;
+      this.prop = prop;
+    }
+    get value() {
+      return `#${this.object[this.prop].getHexString()}`;
+    }
+    set value(hexString) {
+      this.object[this.prop].set(hexString);
+    }
+}
+/////////////////////
+
 
     const canvas = document.querySelector('#c');
     
@@ -17,21 +34,68 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
     const far = 500;
     const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
 
-    camera.position.set(0, 5, 0);
-    camera.up.set(0, 0, 1);
+    camera.position.set(0, 3, 10);
+    camera.up.set(0, 0, -1);
     camera.lookAt(0, 0, 0);
+
+//ORBIT CONTROL
+
+const controls = new OrbitControls(camera, canvas);
+controls.target.set(0, 0, 0);
+controls.update();
+
+
 //AXES HELPER
   const axes = new THREE.AxesHelper();
   axes.material.depthTest = false;
   axes.renderOrder = 1;
 
+
+//LOADERS
   const loadManager = new THREE.LoadingManager();
   const textureLoader = new THREE.TextureLoader(loadManager);
 
   const loader = new FontLoader();
 
+//PLANE
+
+const planeSize = 40;
+ 
+const checkerLoader = new THREE.TextureLoader();
+const texture = checkerLoader.load('static/checker.png');
+texture.wrapS = THREE.RepeatWrapping;
+texture.wrapT = THREE.RepeatWrapping;
+texture.magFilter = THREE.NearestFilter;
+const repeats = planeSize / 2;
+texture.repeat.set(repeats, repeats);
+
+const planeGeo = new THREE.PlaneGeometry(planeSize, planeSize);
+const planeMat = new THREE.MeshPhongMaterial({
+  map: texture,
+  side: THREE.DoubleSide,
+});
+const mesh = new THREE.Mesh(planeGeo, planeMat);
+mesh.rotation.x = Math.PI * -.5;
+scene.add(mesh);
+
   // LIGHTS
 
+  /*
+  const color = 0xFFFFFF;
+const intensity = 1;
+const light = new THREE.AmbientLight(color, intensity);
+scene.add(light);
+*/
+
+const skyColor = 0xB1E1FF;  // light blue
+const groundColor = 0xB97A20;  // brownish orange
+const intensity = 1;
+const light = new THREE.HemisphereLight(skyColor, groundColor, intensity);
+scene.add(light);
+
+
+
+/*
     const dirLight = new THREE.DirectionalLight( 0xffffff, 0.4 );
     dirLight.position.set( 0, 0, 1 ).normalize();
     scene.add( dirLight );
@@ -40,7 +104,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
     //pointLight.color.setHSL( Math.random(), 1, 0.5 );
     pointLight.position.set( 0, 100, 90 );
     scene.add( pointLight );
-
+*/
     const boxWidth = 1;
     const boxHeight = 1;
     const boxDepth = 1;
@@ -61,8 +125,17 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
     const material2 = new THREE.MeshBasicMaterial({color: 0xffffff})
     //const cube = new THREE.Mesh( geometry, material );
     const cube = new THREE.Mesh(geometry, materials);
+
     const materialText = new THREE.MeshPhongMaterial( { color: 0xffffff } )
+    const materialCube2 = new THREE.MeshPhongMaterial( { color: 0xff4400 } )
+    const cube2 = new THREE.Mesh(geometry, materialCube2);
     
+
+    cube.position.set(0,5,-5)
+    cube2.position.set(-4,3,3)
+
+    scene.add(cube2)
+
     loadManager.onLoad = () => {
         loadingElem.style.display = 'none';
     //    const cube = new THREE.Mesh(geometry, materials);
@@ -101,7 +174,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
         } );
 
             text = new THREE.Mesh( textGeometry, materialText );
-            text.position.set(1,0,0)
+            text.position.set(4,3,0)
             scene.add(text)
     //     console.log(text)
     } );
@@ -111,7 +184,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
     loaderModel.load( 'static/porsche/scene.gltf', function ( gltf ) {
     //    console.log(gltf)
         car = gltf
-        car.scene.position.set(-3,0,0)
+        car.scene.position.set(-6 ,0,0)
         scene.add( gltf.scene );
 
     }, undefined, function ( error ) {
@@ -133,13 +206,20 @@ const geometry2 = new THREE.EdgesGeometry(boxGeometry);
 
 const material3 = new THREE.LineBasicMaterial({color: 0x000000});
 const cubeWire = new THREE.LineSegments(geometry2, material3);
-
+cubeWire.position.set(0,1.5,0)
     scene.background = new THREE.Color(0xAAAAAA);
     scene.add( cube );
     scene.add( cubeWire );
     
    // camera.position.z = 8;
 
+//GUI HELPER 
+
+const gui = new GUI();
+//gui.addColor(new ColorGUIHelper(light, 'color'), 'value').name('color');
+gui.addColor(new ColorGUIHelper(light, 'color'), 'value').name('skyColor');
+gui.addColor(new ColorGUIHelper(light, 'groundColor'), 'value').name('groundColor');
+gui.add(light, 'intensity', 0, 2, 0.01);
 
 
 //RESIZE RENDER
@@ -171,12 +251,14 @@ const cubeWire = new THREE.LineSegments(geometry2, material3);
 
         cube.rotation.x += 0.01;
         cube.rotation.y += 0.01;
-        cubeWire.rotation.x -= 0.01;
+       // cube2.rotation.x += 0.01;
+        cube2.rotation.y += 0.01;
+      //  cubeWire.rotation.x -= 0.01;
         cubeWire.rotation.y -= 0.01;
         //text.rotation.x -= 0.01;
         if(text) text.rotation.x -= 0.01;
         //  if(car)car.scene.rotation.x -= 0.01;
-        if(car)car.scene.rotation.z -= 0.01;
+        if(car)car.scene.rotation.y -= 0.01;
 
         renderer.render( scene, camera );
 
