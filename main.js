@@ -5,7 +5,11 @@ import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import GUI from 'https://cdn.jsdelivr.net/npm/lil-gui@0.18/+esm';
+import {RectAreaLightUniformsLib} from 'three/addons/lights/RectAreaLightUniformsLib.js';
+import {RectAreaLightHelper} from 'three/addons/helpers/RectAreaLightHelper.js';
+
 //CLASE DE GUI HELPER
+
 class ColorGUIHelper {
     constructor(object, prop) {
       this.object = object;
@@ -18,6 +22,22 @@ class ColorGUIHelper {
       this.object[this.prop].set(hexString);
     }
 }
+
+//CLASE DE DEG RAD HELPER
+
+class DegRadHelper {
+  constructor(obj, prop) {
+    this.obj = obj;
+    this.prop = prop;
+  }
+  get value() {
+    return THREE.MathUtils.radToDeg(this.obj[this.prop]);
+  }
+  set value(v) {
+    this.obj[this.prop] = THREE.MathUtils.degToRad(v);
+  }
+}
+
 /////////////////////
 
 
@@ -25,6 +45,10 @@ class ColorGUIHelper {
     
     const renderer = new THREE.WebGLRenderer({antialias: true, canvas});
 //  renderer.setSize( window.innerWidth, window.innerHeight );
+    //renderer.physicallyCorrectLights = true;
+    renderer.useLegacyLights = true;
+
+RectAreaLightUniformsLib.init();
 
     const scene = new THREE.Scene();
 
@@ -70,7 +94,8 @@ const repeats = planeSize / 2;
 texture.repeat.set(repeats, repeats);
 
 const planeGeo = new THREE.PlaneGeometry(planeSize, planeSize);
-const planeMat = new THREE.MeshPhongMaterial({
+//const planeMat = new THREE.MeshPhongMaterial({
+const planeMat = new THREE.MeshStandardMaterial({  
   map: texture,
   side: THREE.DoubleSide,
 });
@@ -86,13 +111,52 @@ const intensity = 1;
 const light = new THREE.AmbientLight(color, intensity);
 scene.add(light);
 */
-
+/*
 const skyColor = 0xB1E1FF;  // light blue
 const groundColor = 0xB97A20;  // brownish orange
 const intensity = 1;
 const light = new THREE.HemisphereLight(skyColor, groundColor, intensity);
 scene.add(light);
+*/
 
+const color = 0xFFFFFF;
+const intensity = 1;
+//const width = 12;
+//const height = 4;
+
+//const light = new THREE.DirectionalLight(color, intensity);
+//const light = new THREE.PointLight(color, intensity);
+//const light = new THREE.SpotLight(color, intensity);
+//const light = new THREE.RectAreaLight(color, intensity, width, height);
+const light = new THREE.PointLight(color, intensity);
+light.power = 800;
+light.decay = 2;
+light.distance = Infinity;
+light.position.set(0, 10, 0);
+light.rotation.x = THREE.MathUtils.degToRad(-90);
+//light.target.position.set(-5, 0, 0);
+scene.add(light);
+//scene.add(light.target);
+
+//const helper = new THREE.DirectionalLightHelper(light);
+//const helper = new THREE.PointLightHelper(light);
+//const helper = new THREE.SpotLightHelper(light);
+const helper = new RectAreaLightHelper(light);
+scene.add(helper);
+
+function makeXYZGUI(gui, vector3, name, onChangeFn) {
+  const folder = gui.addFolder(name);
+  folder.add(vector3, 'x', -10, 10).onChange(onChangeFn);
+  folder.add(vector3, 'y', 0, 10).onChange(onChangeFn);
+  folder.add(vector3, 'z', -10, 10).onChange(onChangeFn);
+  folder.open();
+}
+
+function updateLight() {
+  //light.target.updateMatrixWorld();
+  helper.update();
+}
+//updateLight();
 
 
 /*
@@ -127,7 +191,8 @@ scene.add(light);
     const cube = new THREE.Mesh(geometry, materials);
 
     const materialText = new THREE.MeshPhongMaterial( { color: 0xffffff } )
-    const materialCube2 = new THREE.MeshPhongMaterial( { color: 0xff4400 } )
+    //const materialCube2 = new THREE.MeshPhongMaterial( { color: 0xff4400 } )
+    const materialCube2 = new THREE.MeshStandardMaterial({color: '#8AC'});
     const cube2 = new THREE.Mesh(geometry, materialCube2);
     
 
@@ -154,6 +219,7 @@ scene.add(light);
     let car
 
     cube.add(axes)
+
     //const helper = new AxisGridHelper(cube, 2);
     //cube.add(helper, 'visible').name("Tierra");
 
@@ -216,10 +282,29 @@ cubeWire.position.set(0,1.5,0)
 //GUI HELPER 
 
 const gui = new GUI();
+//gui.add(new DegRadHelper(light, 'angle'), 'value', 0, 90).name('angle').onChange(updateLight);
 //gui.addColor(new ColorGUIHelper(light, 'color'), 'value').name('color');
-gui.addColor(new ColorGUIHelper(light, 'color'), 'value').name('skyColor');
-gui.addColor(new ColorGUIHelper(light, 'groundColor'), 'value').name('groundColor');
-gui.add(light, 'intensity', 0, 2, 0.01);
+//gui.addColor(new ColorGUIHelper(light, 'color'), 'value').name('skyColor');
+//gui.addColor(new ColorGUIHelper(light, 'groundColor'), 'value').name('groundColor');
+//gui.add(light, 'intensity', 0, 2, 0.01);
+gui.addColor(new ColorGUIHelper(light, 'color'), 'value').name('color');
+//gui.add(light, 'intensity', 0, 2, 0.01);
+//gui.add(light, 'distance', 0, 40).onChange(updateLight);
+//gui.add(light.target.position, 'x', -10, 10);
+//gui.add(light.target.position, 'z', -10, 10);
+//gui.add(light.target.position, 'y', 0, 10);
+//makeXYZGUI(gui, light.position, 'position', updateLight);
+//makeXYZGUI(gui, light.target.position, 'target', updateLight);
+//gui.add(light, 'penumbra', 0, 1, 0.01);
+
+//gui.add(light, 'width', 0, 20);
+//gui.add(light, 'height', 0, 20);
+//gui.add(new DegRadHelper(light.rotation, 'x'), 'value', -180, 180).name('x rotation');
+//gui.add(new DegRadHelper(light.rotation, 'y'), 'value', -180, 180).name('y rotation');
+//gui.add(new DegRadHelper(light.rotation, 'z'), 'value', -180, 180).name('z rotation');
+//makeXYZGUI(gui, light.position, 'position');
+gui.add(light, 'decay', 0, 4, 0.01);
+gui.add(light, 'power', 0, 2000); 
 
 
 //RESIZE RENDER
